@@ -1,0 +1,431 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container-fluid body-content">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/5.0/css/font-awesome.min.css">
+        @*<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" type="text/css" rel="stylesheet">*@
+
+    <section class="content">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <div class="col-lg-7 text-right">
+                            <h5 class="box-titile">
+                                <small><b>Today : </b></small>@DateTime.Now.ToString("dd MMMM yyy")
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="form-group col-md-5">
+                                <label class="col-sm-4 control-label">Meeting Date</label>
+                                <div class="col-md-8">
+                                    <div class="input-group mb-3">  
+                                        <span class="input-group-text" id="basic-addon1">
+                                            <i class="fa-regular fa-calendar-days"></i>
+                                        </span>
+                                        <input type="text" class="form-control Datetime" palceholder="Meeting Date" id="searchDate" />
+                                        <button class="btn btn-sm btn-primary" onclick="GetZoomByDateRange()"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-success float-end" data-bs-toggle="modal" onclick="ClearScreen()" data-bs-target="#exampleModal">
+            Create New Schedule
+        </button>
+        <hr />
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background-color:cornsilk">
+                    <div class="modal-header" style="background-color:lightsteelblue">
+                        <h5 class="modal-title" id="exampleModalLabel">New Schedule</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-horizontal">
+                            <input type="hidden" id="zoomIdSch" />
+                            <div class="form-group d-flex">
+                                <label style="width:60%;" for="Pic"><b>PIC</b></label>
+                                <select name="pic" class="form-control slect2" required id="Pic" readonly="true">
+                                    <option value="">--PIC--</option>
+                                </select>
+                                <br />
+                            </div>
+                            <div>
+                                <br />
+                                <div class="form-group d-flex">
+                                    <label style="width:60%;" for="Zoom"><b>Zoom Account</b></label>
+                                    <select name="Zoom" class="form-control slect2" required id="Zoom" readonly="true">
+                                        <option value="">--Zoom--</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="form-group d-flex">
+                                <label style="width:60%;" for="StartDate"><b>Start Date</b></label>
+                                    @*<input id="StartDate" type="datetime-local" onclick="DateValidation()" class="form-control" />*@
+                                <input id="date" type="text" class="form-control Datetime" />
+                            </div>
+                                <br />
+                                @* <div class="form-group d-flex">
+                            <label style="width:60%;" for="EndDate"><b>End Date</b></label>
+                            <input id="EndDate" type="datetime-local" class="form-control" />
+                            </div>*@
+                            
+                            <div class="form-group d-flex">
+                                <label style="width:60%;" for="Agenda"><b>Agenda</b></label>
+                                <textarea id="Agenda" type="text" class="form-control" rows="2"></textarea>
+                            </div>
+                            <br />
+                            <div class="form-group d-flex">
+                                <label style="width:60%;" for="Link"><b>Link Zoom</b></label>
+                                <textarea id="Link" type="text" class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="Save()">Save changes</button>
+                            @*<button type="button" class="btn btn-primary" onclick="Update()">Update</button>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<br />
+<br />
+
+<table class="table table-striped table-bordered table-however" id="table">
+    <thead class="table-primary">
+        <tr>
+            <th>No</th>
+            <th>PIC</th>
+            <th>Zoom ACC</th>
+            <th>Date&Time</th>
+            <th>Agenda</th>
+            <th>Link</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+</table>
+
+</section>
+
+@section scripts{
+
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs5/dt-1.12.1/datatables.min.css" />
+    <script type="text/javascript" src="../lib/moment/moment.js"></script>
+    <link rel="stylesheet" type="text/css" href="../lib/datetimepicker/daterangepicker.css" />
+    <script type="text/javascript" src="../lib/datetimepicker/daterangepicker.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs5/dt-1.12.1/datatables.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            var today = new Date();
+            var dd = today.getDate();
+            var mm = today.getMonth() + 1; //January is 0!
+            var yyyy = today.getFullYear();
+            
+            var maxDate = dd + '-' + mm + '-' + yyyy;
+            $('.date').attr('min',maxDate);
+
+            $('.Datetime').daterangepicker({
+                 "showDropdowns": true,
+                 "timePicker": true,
+                 "timePicker24Hour": true,
+                 "startDate": today,
+                 "minDate": today
+            });
+
+            Read();
+            GetPic();
+            GetZoom();
+        });
+
+        const Read = () => {
+            $("#table").DataTable({
+                ajax: {
+                    "url": "@Url.Action("GetAll", "Home")",
+                    "type": "Get",
+                    "dataType": "json",
+                },
+                destroy: true,
+                columns: [
+                    {
+                        render: (data, type, row, meta) => {
+                            console.log(data, type, row, meta);
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    { data: "pic.name" },
+                    { data: "zoomAccount.name" },
+                    {
+                        render: (data, type, row) => {
+                            //return new Date(row.startDate).toLocaleString() + " - " + new Date(row.endDate).toLocaleString();
+                            return moment(row.startDate).format("LLLL") + " - " + moment(row.endDate).format("LLLL");
+                        }
+                    },
+                    { data: "agenda" },
+                    {
+                        render: (data, type, row) => {
+                            return '' + "<a href=" + row.linkAddress + " target='_blank'>" + row.linkAddress + "</a>";
+                        }
+                    },
+                    {
+                        render: (data, type, row) => {
+                            return '<div class="d-flex"><a class="btn btn-sm btn-warning mr-2" onclick=GetId(' + row.id + ')> Edit </a>' +
+                                '<a class="btn btn-sm btn-danger ml-2" onclick="DeleteData(' + row.id + ')"> Delete </a></div>'
+                        }
+
+                    }
+                ]
+            })
+        }
+
+        const Save = () => {
+            var id = $("#zoomIdSch").val();
+            console.log(id);
+            if (id == "") {
+                id = 0;
+            }
+            var data = new Object();
+            data.id = id;
+            data.picId = $("#Pic").val();
+            data.zoomAccountId = $("#Zoom").val();
+            data.startDate = $("#StartDate").val();
+            data.endDate = $("#EndDate").val();
+            data.agenda = $("#Agenda").val();
+            data.linkAddress = $("#Link").val();
+
+            $.ajax({
+                "url": "@Url.Action("Save", "Home")",
+                "type": "Post",
+                "data": data,
+                "datatype": "json"
+            }).then((data) => {
+                if (data != null && data.startDate <= data.endDate) {
+                    Swal.fire({
+                        position: 'top',
+                        icon: 'success',
+                        title: 'Data has been saved',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(function() {
+                        $("#table").DataTable().ajax.reload();
+                        $("#exampleModal").modal("hide");
+                    });
+                }
+                else {
+                    Swal.fire({
+                        position: 'top',
+                        icon: 'error',
+                        title: 'Oopss..',
+                        text: 'Start date cannot be after end date'
+                    });
+                }
+            });
+        }
+
+        //const DateValidation = () => {
+        //    $("#StartDate").datepicker({
+        //        numberOfMonths: 2,
+        //        onSelect: function(selected) {
+        //            var dt = new Date(selected);
+        //            dt.setDate(dt.getDate() + 1);
+        //            $("#EndDate").datepicker("option", "minDate", dt);
+        //        }
+        //    });
+        //    $("#EndDate").datepicker({
+        //        numberOfMonths: 2,
+        //        onSelect: function(selected) {
+        //            var dt = new Date(selected);
+        //            dt.setDate(dt.getDate() - 1);
+        //            $("#StartDate").datepicker("option", "maxDate", dt);
+        //        }
+        //    });
+        //});
+        //}
+
+
+        const Edit = (id) => {
+
+            var data = new Object();
+            data.picId = $("#Pic").val();
+            data.zoomAccountId = $("#Zoom").val();
+            data.startDate = $("#StartDate").val();
+            data.endDate = $("#EndDate").val();
+            data.agenda = $("#Agenda").val();
+            data.linkAddress = $("#Link").val();
+
+            $.ajax({
+                "url": "@Url.Action("Save", "Home")",
+                "type": "Post",
+                "data": data,
+                "datatype": "json"
+            }).then((data) => {
+                if (data != null) {
+                    alert("ok");
+                }
+                else {
+                    alert("gagal");
+                }
+            });
+        }
+
+        const GetId = (id) => {
+            $.ajax({
+                "url": "@Url.Action("GetById", "Home")",
+                "type": "Get",
+                "data": { id: id },
+                "datatype": "json"
+            }).then((data) => {
+
+                //2022-06-15T14:21
+                var day = new Date(data.startDate).toISOString().split(".")[0];
+                var time = data.startDate;
+                var time2 = data.endDate;
+                var result = day.substr(0, day.length - 3)
+                //var day = d1.join("-")
+                var day1 = new Date(data.endDate).toISOString().split(".")[0];
+                var result1 = day1.substr(0, day1.length - 3)
+
+                console.log(data);
+                $("#zoomIdSch").val(data.id);
+                $("#Agenda").val(data.agenda);
+                $("#Pic").val(data.picId).trigger("change");
+                $("#Zoom").val(data.zoomAccountId).trigger("change");
+                $("#StartDate").val(time);
+                $("#EndDate").val(time2);
+                $("#Link").val(data.linkAddress)
+                $("#exampleModal").modal("show");
+            });
+
+
+        }
+
+        const ClearScreen = () => {
+            $("#zoomIdSch").val('');
+            $("#Agenda").val('');
+            $("#Pic").val('').trigger("change");
+            $("#Zoom").val('').trigger("change");
+            $("#StartDate").val('');
+            $("#EndDate").val('');
+            $("#Link").val('');
+        }
+
+        const DeleteData = (id) => {
+            Swal.fire({
+                title: 'Are you sure want to delete?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        "url": "@Url.Action("Delete","Home")/" + id,
+                        "type": "POST",
+                        "datatype": "JSON",
+                    }).then((result) => {
+                        if (result != null) {
+                            Swal.fire('Data Deleted', '', 'success');
+                            $("#table").DataTable().ajax.reload();
+                        }
+                        else {
+                            Swal.fire('Changes are not saved', '', 'info')
+                        }
+                    });
+                } else if (result.isDenied) {
+                }
+            })
+        }
+
+        const GetPic = () => {
+            $.ajax({
+                "url": "@Url.Action("GetPic", "Home")",
+                "type": "Get",
+                "datatype": "json"
+            }).then((data) => {
+                var pic = $("#Pic");
+                pic.html('');
+                $("<option></option>").val('').text("--PIC--").appendTo(pic);
+                $.each(data, (i, value) => {
+                    $("<option></option>").val(value.id).text(value.name).appendTo(pic);
+                });
+            })
+        }
+
+        const GetZoom = () => {
+            $.ajax({
+                "url": "@Url.Action("GetZoom","Home")",
+                "type": "Get",
+                "datatype": "json"
+            }).then((data) => {
+                var zoom = $("#Zoom");
+                zoom.html('');
+                $("<option></option>").val('').text("--Zoom Account--").appendTo(zoom);
+                $.each(data, (i, value) => {
+                    $("<option></option>").val(value.id).text(value.name).appendTo(zoom);
+                });
+            })
+        }
+
+        const GetZoomByDateRange = () => {
+
+            var date = $("#searchDate").val();
+            var startDate = date.substring(0, 10);
+            var endDate = date.substring(13, 23);
+            $("#table").DataTable({
+                ajax: {
+                    "url": "@Url.Action("DateRange", "Home")",
+                    "type": "Get",
+                    "data": { startDate: startDate, endDate: endDate },
+                    "dataType": "json",
+                },
+                destroy: "true",
+                columns: [
+                    {
+                        render: (data, type, row, meta) => {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    { data: "pic.name" },
+                    { data: "zoomAccount.name" },
+                    {
+                        render: (data, type, row) => {
+                            return moment(row.startDate).format("LLLL") + " - " + moment(row.endDate).format("LLLL");
+                        }
+                    },
+                    { data: "agenda" },
+                    {
+                        render: (data, type, row) => {
+                            return '' + "<a href=" + row.linkAddress + " target='_blank'>" + row.linkAddress + "</a>";
+                        }
+                    },
+                    {
+                        render: (data, type, row) => {
+                            return '<div class="d-flex"><a class="btn btn-sm btn-warning mr-2" onclick=GetId(' + row.id + ')> Edit </a>' +
+                                '<a class="btn btn-sm btn-danger ml-2" onclick="DeleteData(' + row.id + ')"> Delete </a></div>'
+                        }
+
+                    }
+                ]
+            })
+        }
+    </script>
+
+}
